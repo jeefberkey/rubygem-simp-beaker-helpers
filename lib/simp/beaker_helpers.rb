@@ -175,7 +175,7 @@ module Simp::BeakerHelpers
             refreshonly => true,
           }
 
-          file{ '/root/setup_fips.sh':
+          file { '/root/setup_fips.sh':
             ensure  => 'file',
             owner   => 'root',
             group   => 'root',
@@ -341,7 +341,7 @@ DEFAULT_KERNEL_TITLE=`/sbin/grubby --info=\\\${DEFAULT_KERNEL_INFO} | grep -m1 t
     puts "== Fake PKI CA"
     pki_dir  = File.expand_path( "../../files/pki", File.dirname(__FILE__))
     host_dir = '/root/pki'
-    fqdns    = fact_on(hosts, 'fqdn')
+    fqdns    = hosts.map { |host| host.hostname }
 
     on ca_sut, %Q(mkdir -p "#{host_dir}")
     Dir[ File.join(pki_dir, '*') ].each{|f| scp_to( ca_sut, f, host_dir)}
@@ -378,10 +378,10 @@ DEFAULT_KERNEL_TITLE=`/sbin/grubby --info=\\\${DEFAULT_KERNEL_INFO} | grep -m1 t
   #                 public/fdqn.pub
   #                 private/fdqn.pem
   def copy_pki_to(sut, local_pki_dir, sut_base_dir = '/etc/pki/simp-testing')
-      fqdn                = fact_on(sut, 'fqdn')
+      fqdn                = sut.hostname
       sut_pki_dir         = File.join( sut_base_dir, 'pki' )
       local_host_pki_tree = File.join(local_pki_dir,'pki','keydist',fqdn)
-      local_cacert = File.join(local_pki_dir,'pki','demoCA','cacert.pem')
+      local_cacert        = File.join(local_pki_dir,'pki','demoCA','cacert.pem')
 
       on sut, %Q(mkdir -p "#{sut_pki_dir}/public" "#{sut_pki_dir}/private" "#{sut_pki_dir}/cacerts")
       scp_to(sut, "#{local_host_pki_tree}/#{fqdn}.pem",   "#{sut_pki_dir}/private/")
