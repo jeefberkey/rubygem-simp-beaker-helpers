@@ -430,7 +430,7 @@ DEFAULT_KERNEL_TITLE=`/sbin/grubby --info=\\\${DEFAULT_KERNEL_INFO} | grep -m1 t
       host_entry = { fqdn => [] }
 
       # Ensure that all interfaces are active prior to collecting data
-      activate_interfaces(host)
+      activate_interfaces(host) unless ENV['BEAKER_no_fix_interfaces']
 
       # Gather the IP Addresses for the host to embed in the cert
       interfaces = fact_on(host, 'interfaces').strip.split(',')
@@ -557,7 +557,9 @@ done
   # Can be passed any number of hosts either singly or as an Array
   def activate_interfaces(hosts)
     Array(hosts).each do |host|
-      interfaces = fact_on(host, 'interfaces').strip.split(',')
+      interfaces_fact = retry_on(host,'facter interfaces', verbose: true).stdout
+
+      interfaces = interfaces_fact.strip.split(',')
       interfaces.delete_if { |x| x =~ /^lo/ }
 
       interfaces.each do |iface|
@@ -585,7 +587,7 @@ done
     # We can't guarantee that the upstream vendor isn't disabling interfaces so
     # we need to turn them on at each context run
     c.before(:context) do
-      activate_interfaces(hosts)
+      activate_interfaces(hosts) unless ENV['BEAKER_no_fix_interfaces']
     end
 
     c.after(:all) do
@@ -680,7 +682,7 @@ done
           noop    => false
         }
     PLUGINSYNC_MANIFEST
-    apply_manifest_on(hosts, pluginsync_manifest)
+    apply_manifest_on(hosts, pluginsync_manifest, silent: true)
   end
 
 

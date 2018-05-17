@@ -105,6 +105,9 @@ sensitive).
   * The base directory where suites will be defined
   * Default: spec/acceptance
 
+* BEAKER_no_fix_interfaces
+  * Skip code that makes sure all interfaces are up
+
 #### Global Suite Configuration
 
 A file `config.yml` can be placed in the `suites` directory to control certain
