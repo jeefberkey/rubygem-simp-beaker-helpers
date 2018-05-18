@@ -424,7 +424,7 @@ DEFAULT_KERNEL_TITLE=`/sbin/grubby --info=\\\${DEFAULT_KERNEL_INFO} | grep -m1 t
     # We need this so that we don't insert any common IP addresses into certs
     suts_network_info = {}
 
-    block_on(suts, run_in_parallel: true) do |host|
+    hosts.each do |host|
       fqdn = fact_on(host, 'fqdn').strip
 
       host_entry = { fqdn => [] }
@@ -682,7 +682,7 @@ done
           noop    => false
         }
     PLUGINSYNC_MANIFEST
-    apply_manifest_on(hosts, pluginsync_manifest, silent: true)
+    apply_manifest_on(hosts, pluginsync_manifest, silent: true, run_in_parallel: true)
   end
 
 
