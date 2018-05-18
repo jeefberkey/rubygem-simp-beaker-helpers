@@ -165,7 +165,7 @@ module Simp::BeakerHelpers
     opts[:pluginsync] = opts.fetch(:pluginsync, true)
 
     unless ENV['BEAKER_copy_fixtures'] == 'no'
-      Array(suts).each do |sut|
+      block_on(suts, run_in_parallel: true) do |sut|
         STDERR.puts "  ** copy_fixture_modules_to: '#{sut}'" if ENV['BEAKER_helpers_verbose']
 
         # Use spec_prep to provide modules (this supports isolated networks)
@@ -214,7 +214,7 @@ module Simp::BeakerHelpers
   def enable_fips_mode_on( suts = hosts )
     puts '== configuring FIPS mode on SUTs'
     puts '  -- (use BEAKER_fips=no to disable)'
-    suts.each do |sut|
+    block_on(suts, run_in_parallel: true) do |sut|
       puts "  -- enabling FIPS on '#{sut}'"
 
       # We need to use FIPS compliant algorithms and keylengths as per the FIPS
@@ -327,7 +327,7 @@ DEFAULT_KERNEL_TITLE=`/sbin/grubby --info=\\\${DEFAULT_KERNEL_INFO} | grep -m1 t
       :timeout
     ]
 
-    Array(suts).each do |sut|
+    block_on(suts, run_in_parallel: true) do |sut|
       if sut['yum_repos']
         sut['yum_repos'].each_pair do |repo, metadata|
           repo_manifest = %(yumrepo { #{repo}:)
@@ -363,7 +363,7 @@ DEFAULT_KERNEL_TITLE=`/sbin/grubby --info=\\\${DEFAULT_KERNEL_INFO} | grep -m1 t
   # Apply known OS fixes we need to run Beaker on each SUT
   def fix_errata_on( suts = hosts )
 
-    suts.each do |sut|
+    block_on(suts, run_in_parallel: true) do |sut|
       # We need to be able to flip between server and client without issue
       on sut, 'puppet resource group puppet gid=52'
       on sut, 'puppet resource user puppet comment="Puppet" gid="52" uid="52" home="/var/lib/puppet" managehome=true'
@@ -424,7 +424,7 @@ DEFAULT_KERNEL_TITLE=`/sbin/grubby --info=\\\${DEFAULT_KERNEL_INFO} | grep -m1 t
     # We need this so that we don't insert any common IP addresses into certs
     suts_network_info = {}
 
-    hosts.each do |host|
+    block_on(suts, run_in_parallel: true) do |host|
       fqdn = fact_on(host, 'fqdn').strip
 
       host_entry = { fqdn => [] }
@@ -556,7 +556,7 @@ done
   #
   # Can be passed any number of hosts either singly or as an Array
   def activate_interfaces(hosts)
-    Array(hosts).each do |host|
+    block_on(hosts, run_in_parallel: true) do |host|
       interfaces_fact = retry_on(host,'facter interfaces', verbose: true).stdout
 
       interfaces = interfaces_fact.strip.split(',')
