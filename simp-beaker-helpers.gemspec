@@ -15,22 +15,10 @@ Gem::Specification.new do |s|
   s.authors     = ['Chris Tessmer','Trevor Vaughan']
   s.email       = 'simp@simp-project.org'
   s.homepage    = 'https://github.com/simp/rubygem-simp-beaker-helpers'
-  s.metadata = {
-                 'issue_tracker' => 'https://simp-project.atlassian.net'
-               }
-  s.add_runtime_dependency 'beaker', '~> 3.14'
-  s.add_runtime_dependency 'beaker-puppet', '~> 0.8.0'
-  s.add_runtime_dependency 'beaker-puppet_install_helper', '~> 0.6'
-  s.add_runtime_dependency 'highline', '~> 1.6'
+  s.metadata = { 'issue_tracker' => 'https://simp-project.atlassian.net' }
 
-  # Because fog-opensack dropped support for Ruby < 2.2.0
-  # TODO: Update this when we no longer support Ruby 2.1.9 (should be October 2018)
-  s.add_runtime_dependency 'fog-openstack', '0.1.25'
-
-  # Because net-telnet dropped support for Ruby < 2.3.0
-  # TODO: Update this when we no longer support Ruby 2.1.9 (should be October 2018)
-  s.add_runtime_dependency 'net-telnet', '~> 0.1.1'
-
+  s.add_runtime_dependency 'beaker', '~> 4'
+  s.add_runtime_dependency 'beaker-puppet', '~> 1'
 
   ### s.files = Dir['Rakefile', '{bin,lib,spec}/**/*', 'README*', 'LICENSE*'] & `git ls-files -z .`.split("\0")
   s.files       = `git ls-files`.split("\n")
