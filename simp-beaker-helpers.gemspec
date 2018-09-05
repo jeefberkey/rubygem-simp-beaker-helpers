@@ -19,6 +19,8 @@ Gem::Specification.new do |s|
 
   s.add_runtime_dependency 'beaker', '~> 4'
   s.add_runtime_dependency 'beaker-puppet', '~> 1'
+  s.add_runtime_dependency 'beaker-vagrant', '~> 1'
+  s.add_runtime_dependency 'beaker-rspec', '~> 1'
 
   ### s.files = Dir['Rakefile', '{bin,lib,spec}/**/*', 'README*', 'LICENSE*'] & `git ls-files -z .`.split("\0")
   s.files       = `git ls-files`.split("\n")
