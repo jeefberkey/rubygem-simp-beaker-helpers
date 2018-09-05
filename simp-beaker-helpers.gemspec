@@ -17,10 +17,10 @@ Gem::Specification.new do |s|
   s.homepage    = 'https://github.com/simp/rubygem-simp-beaker-helpers'
   s.metadata = { 'issue_tracker' => 'https://simp-project.atlassian.net' }
 
-  s.add_runtime_dependency 'beaker', '~> 4'
-  s.add_runtime_dependency 'beaker-puppet', '~> 1'
-  s.add_runtime_dependency 'beaker-vagrant', '~> 1'
-  s.add_runtime_dependency 'beaker-rspec', '~> 1'
+  s.add_runtime_dependency 'beaker',         '~> 4'
+  s.add_runtime_dependency 'beaker-puppet',  '>= 0'
+  s.add_runtime_dependency 'beaker-vagrant', '>= 0'
+  s.add_runtime_dependency 'beaker-rspec',   '>= 0'
 
   ### s.files = Dir['Rakefile', '{bin,lib,spec}/**/*', 'README*', 'LICENSE*'] & `git ls-files -z .`.split("\0")
   s.files       = `git ls-files`.split("\n")
