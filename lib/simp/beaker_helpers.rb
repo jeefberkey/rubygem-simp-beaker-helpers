@@ -684,8 +684,8 @@ done
   #
   def set_hieradata_on(sut, hieradata, terminus = 'default')
     puts "This function  was meant for Hiera 3 and will not behave as expected in puppet >= 4"
+    puts "Please use plain write_hieradata_to"
     write_hieradata_to sut, hieradata, terminus
-    write_hiera_config_on sut, Array(terminus)
   end
 
 
