@@ -643,26 +643,19 @@ done
   #   retained for debugging purposes.
   #
   def write_hieradata_to(sut, hieradata, terminus = 'default')
-    # @temp_hieradata_dirs ||= []
-    # data_dir = Dir.mktmpdir('hieradata')
-    # @temp_hieradata_dirs << data_dir
+    puts 'setting terminus (the third arg) does nothing and will be removed' if terminus != 'default'
 
-    # filename = File.join(data_dir, "#{terminus}.yaml")
     data = hieradata.is_a?(String) ? hieradata : hieradata.to_yaml
     codedir = hiera_datadir(sut)
 
-    on(sut, "mkdir -p #{codedir}")
-
-    on(sut, "mkdir -p #{codedir}/environments/production/{hiera,}data")
+    # on(sut, "mkdir -p #{codedir}/environments/production/{hiera,}data")
     create_remote_file(
       sut,
-      "#{codedir}/environments/production/data/common.yaml",
+      "#{codedir}/data/common.yaml",
       data
     )
-    on(sut, "rm -rf #{codedir}/environments/production/hieradata")
-    on(sut, "ln -s #{codedir}/environments/production/data #{codedir}/environments/production/hieradata")
-
-    # copy_hiera_data_to sut, File.join(data_dir, "#{terminus}.yaml")
+    on(sut, "rm -rf #{codedir}/hieradata")
+    on(sut, "ln -s #{codedir}/data #{codedir}/hieradata")
   end
 
 
