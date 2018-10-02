@@ -648,14 +648,9 @@ done
     data = hieradata.is_a?(String) ? hieradata : hieradata.to_yaml
     codedir = hiera_datadir(sut)
 
-    # on(sut, "mkdir -p #{codedir}/environments/production/{hiera,}data")
-    create_remote_file(
-      sut,
-      "#{codedir}/data/common.yaml",
-      data
-    )
-    on(sut, "rm -rf #{codedir}/hieradata")
-    on(sut, "ln -s #{codedir}/data #{codedir}/hieradata")
+    on(sut, "mkdir -p #{codedir}/data")
+    create_remote_file(sut, "#{codedir}/data/common.yaml", data)
+    on(sut, "rm -rf #{codedir}/hieradata && ln -s #{codedir}/data #{codedir}/hieradata")
   end
 
 
