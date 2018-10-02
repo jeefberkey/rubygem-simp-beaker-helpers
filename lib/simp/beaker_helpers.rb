@@ -691,7 +691,13 @@ done
         }
     PLUGINSYNC_MANIFEST
     parallel = (ENV['BEAKER_SIMP_parallel'] == 'yes')
-    apply_manifest_on(hosts, pluginsync_manifest, :run_in_parallel => parallel)
+    silent = !(ENV['BEAKER_helpers_verbose'].nil?)
+    apply_manifest_on(
+      hosts,
+      pluginsync_manifest,
+      :run_in_parallel => parallel,
+      :silent          => silent
+    )
   end
 
 
