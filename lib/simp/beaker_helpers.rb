@@ -604,6 +604,25 @@ done
   end
 
 
+  # Get file path to the hieradatadir for a given host.
+  # Handles whether or not a host is AIO-based & backwards compatibility
+  #
+  # @param[Host] host Host you want to use the hieradatadir from
+  #
+  # @return [String] Path to the hiera data directory
+  def hiera_datadir(host)
+    if host[:type] =~ /aio/
+      majver = on(host, 'puppet --version').output.strip.split('.').first.to_i
+      if majver >= 5
+        File.join(host.puppet['codedir'], 'data')
+      else
+        File.join(host.puppet['codedir'], 'hieradata')
+      end
+    else
+      host[:hieradatadir]
+    end
+  end
+
   # Writes a YAML file in the Hiera :datadir of a Beaker::Host.
   #
   # @note This is useless unless Hiera is configured to use the data file.
@@ -624,20 +643,26 @@ done
   #   retained for debugging purposes.
   #
   def write_hieradata_to(sut, hieradata, terminus = 'default')
-    @temp_hieradata_dirs ||= []
-    data_dir = Dir.mktmpdir('hieradata')
-    @temp_hieradata_dirs << data_dir
+    # @temp_hieradata_dirs ||= []
+    # data_dir = Dir.mktmpdir('hieradata')
+    # @temp_hieradata_dirs << data_dir
 
-    fh = File.open(File.join(data_dir, "#{terminus}.yaml"), 'w')
-    if hieradata.is_a?(String)
-      fh.puts(hieradata)
-    else
-      fh.puts(hieradata.to_yaml)
-    end
-    fh.close
+    # filename = File.join(data_dir, "#{terminus}.yaml")
+    data = hieradata.is_a?(String) ? hieradata : hieradata.to_yaml
+    codedir = hiera_datadir(sut)
 
-    apply_manifest_on sut, "file { '#{hiera_datadir(sut)}': ensure => 'directory', force => true }"
-    copy_hiera_data_to sut, File.join(data_dir, "#{terminus}.yaml")
+    on(sut, "mkdir -p #{codedir}")
+
+    on(sut, "mkdir -p #{codedir}/environments/production/{hiera,}data")
+    create_remote_file(
+      sut,
+      "#{codedir}/environments/production/data/common.yaml",
+      data
+    )
+    on(sut, "rm -rf #{codedir}/environments/production/hieradata")
+    on(sut, "ln -s #{codedir}/environments/production/data #{codedir}/environments/production/hieradata")
+
+    # copy_hiera_data_to sut, File.join(data_dir, "#{terminus}.yaml")
   end
 
 
@@ -658,6 +683,7 @@ done
   # @return [Nil]
   #
   def set_hieradata_on(sut, hieradata, terminus = 'default')
+    puts "This function  was meant for Hiera 3 and will not behave as expected in puppet >= 4"
     write_hieradata_to sut, hieradata, terminus
     write_hiera_config_on sut, Array(terminus)
   end
