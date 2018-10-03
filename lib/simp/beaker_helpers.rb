@@ -597,10 +597,6 @@ done
     c.before(:context) do
       activate_interfaces(hosts) unless ENV['BEAKER_no_fix_interfaces']
     end
-
-    c.after(:all) do
-      clear_temp_hieradata
-    end
   end
 
 
@@ -611,8 +607,9 @@ done
   #
   # @return [String] Path to the hiera data directory
   def hiera_datadir(host)
+    parallel = (ENV['BEAKER_SIMP_parallel'] == 'yes')
     if host[:type] =~ /aio/
-      majver = on(host, 'puppet --version').output.strip.split('.').first.to_i
+      majver = on(host, 'puppet --version',{run_in_parallel: parallel}).output.strip.split('.').first.to_i
       if majver >= 5
         File.join(host.puppet['codedir'], 'data')
       else
@@ -630,39 +627,61 @@ done
   #
   # @param sut  [Array<Host>, String, Symbol] One or more hosts to act upon.
   #
-  # @param heradata [Hash, String] The full hiera data structure to write to
+  # @param heiradata [Hash, String] The full hiera data structure to write to
   #   the system.
   #
-  # @param terminus [String] The basename of the YAML file minus the extension
-  #   to write to the system.
+  # @param path [String] Path of the hiera file to write. Defaults to
+  #   common.yaml, but if a more complicated hierarchy is used, it can be set
+  #   to whatever path relative to the datadir.
   #
   # @return [Nil]
   #
-  # @note This creates a tempdir on the host machine which should be removed
-  #   using `#clear_temp_hieradata` in the `after(:all)` hook.  It may also be
-  #   retained for debugging purposes.
-  #
-  def write_hieradata_to(sut, hieradata, terminus = 'default')
-    puts 'setting terminus (the third arg) does nothing and will be removed' if terminus != 'default'
-
+  def write_hieradata_to(suts, hieradata, path = 'common.yaml')
+    parallel = (ENV['BEAKER_SIMP_parallel'] == 'yes')
     data = hieradata.is_a?(String) ? hieradata : hieradata.to_yaml
-    codedir = hiera_datadir(sut)
+    codedir = hiera_datadir(suts)
 
-    on(sut, "mkdir -p #{codedir}/data")
-    create_remote_file(sut, "#{codedir}/data/common.yaml", data)
-    on(sut, "rm -rf #{codedir}/hieradata && ln -s #{codedir}/data #{codedir}/hieradata")
+    on(suts, "mkdir -p #{codedir}", {run_in_parallel: parallel})
+    create_remote_file(suts, "#{codedir}/#{path}", data, {run_in_parallel: parallel})
+    # on(suts, "rm -rf #{codedir}/../hieradata && ln -s #{codedir}/../data #{codedir}/../hieradata",{run_in_parallel: parallel})
   end
 
+  # Write hiera config file on one or more provided hosts
+  #
+  # @param[Host, Array<Host>, String, Symbol] host    One or more hosts to act upon,
+  #                           or a role (String or Symbol) that identifies one or more hosts.
+  # @param[Array] Array of hiera levels.
+  #   common.yaml gets appended at the bottom of the hierarchy
+  #
+  # @see https://puppet.com/docs/puppet/5.0/hiera_config_yaml_5.html#syntax
+  #
+  def write_hiera_config_on(suts, hierarchy = [])
+    common = {'name' => "Common data",
+              'path' => 'common.yaml'}
+    block_on suts do |host|
+      hiera_config              = {}
+      hiera_config['version']   = 5
+      hiera_config['defaults']  = {
+        'datadir'   => 'data',
+        'data_hash' => 'yaml'
+      }
+      hiera_config['hierarchy'] = []
+      hiera_config['hierarchy'] << hierarchy unless hierarchy.empty?
+      hiera_config['hierarchy'] << common
+      hiera_config['hierarchy'].flatten!
+      create_remote_file suts, host.puppet['hiera_config'], hiera_config.to_yaml
+    end
+  end
 
   # Write the provided data structure to Hiera's :datadir and configure Hiera to
   # use that data exclusively.
   #
-  # @note This is authoritative.  It manages both Hiera data and configuration,
+  # @note This is authoritative. It manages both Hiera data and configuration,
   #   so it may not be used with other Hiera data sources.
   #
-  # @param sut  [Array<Host>, String, Symbol] One or more hosts to act upon.
+  # @param sut [Array<Host>, String, Symbol] One or more hosts to act upon.
   #
-  # @param heradata [Hash, String] The full hiera data structure to write to
+  # @param heiradata [Hash, String] The full hiera data structure to write to
   #   the system.
   #
   # @param terminus [String] The basename of the YAML file minus the extension
@@ -670,24 +689,9 @@ done
   #
   # @return [Nil]
   #
-  def set_hieradata_on(sut, hieradata, terminus = 'default')
-    puts "This function  was meant for Hiera 3 and will not behave as expected in puppet >= 4"
-    puts "Please use plain write_hieradata_to"
-    write_hieradata_to sut, hieradata, terminus
-  end
-
-
-  # Clean up all temporary hiera data files.
-  #
-  # Meant to be called from after(:all)
-  def clear_temp_hieradata
-    if @temp_hieradata_dirs && !@temp_hieradata_dirs.empty?
-      @temp_hieradata_dirs.each do |data_dir|
-        if File.exists?(data_dir)
-          FileUtils.rm_r(data_dir)
-        end
-      end
-    end
+  def set_hieradata_on(suts, hieradata, hierarchy = [])
+    write_hieradata_to suts, hieradata
+    write_hiera_config_on suts, hierarchy
   end
 
 

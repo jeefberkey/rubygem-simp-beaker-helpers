@@ -1,3 +1,10 @@
+### 1.11.1 / 2018-10-01
+* Continued Beaker 4 support
+  * Remove usage of write_hiera_config_on
+  * Rewrite write_hieradata_to to use create_remote_file
+  * Add hiera_datadir function to make up for the deprecation of beaker-hiera
+  * Silenced the pluginsync function
+
 ### 1.11.0 / 2018-09-09
 * Add support for Beaker 4
 

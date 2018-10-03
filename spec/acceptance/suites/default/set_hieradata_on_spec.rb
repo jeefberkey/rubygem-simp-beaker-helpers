@@ -12,11 +12,11 @@ hosts.each do |host|
 
       it 'writes to the configuration file' do
         stdout = on(host, "cat #{host.puppet['hiera_config']}").stdout
-        expect(stdout).to match(":hierarchy:\n- default")
+        expect(stdout).to match("hierarchy:\n- name: Common data\n  path: common.yaml")
       end
 
       it 'writes the correct contents to the correct file' do
-        stdout = on(host, "cat #{hiera_datadir(host)}/default.yaml").stdout
+        stdout = on(host, "cat #{hiera_datadir(host)}/common.yaml").stdout
         expect(stdout).to eq("---\n")
       end
     end
@@ -30,13 +30,17 @@ hosts.each do |host|
       end
 
       it 'writes the correct contents to the correct file' do
-        stdout = on(host, "cat #{hiera_datadir(host)}/default.yaml").stdout
+        stdout = on(host, "cat #{hiera_datadir(host)}/common.yaml").stdout
         expect(stdout).to eq("---\nfoo: bar\n")
       end
     end
 
     context 'when the terminus is set' do
-      before(:all) { set_hieradata_on(host, "---\n", 'not-default') }
+      before(:all) { set_hieradata_on(
+        host,
+        {'hiera' => 'key'},
+        [{'name' => 'default', 'path' => 'default.yaml'}]
+      ) }
       after(:all) { on(host, "rm -rf #{host.puppet['hiera_config']} #{hiera_datadir(host)}") }
 
       it 'creates the datadir' do
@@ -45,12 +49,12 @@ hosts.each do |host|
 
       it 'writes the correct hierarchy to the configuration file' do
         stdout = on(host, "cat #{host.puppet['hiera_config']}").stdout
-        expect(stdout).to match(":hierarchy:\n- not-default")
+        expect(stdout).to match("hierarchy:\n- name: default\n  path: default.yaml")
       end
 
       it 'writes the correct contents to the correct file' do
-        stdout = on(host, "cat #{hiera_datadir(host)}/not-default.yaml").stdout
-        expect(stdout).to eq("---\n")
+        stdout = on(host, "cat #{hiera_datadir(host)}/default.yaml").stdout
+        expect(stdout).to eq("---\nhiera: key")
       end
     end
   end
